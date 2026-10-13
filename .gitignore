@@ -15,3 +15,6 @@
 .vscode/
 .idea/
 *.swp
+
+# Hugo 自动生成的编辑器配置（Stack 4 下已失效）
+/assets/jsconfig.json

@@ -30,6 +30,9 @@ enableRobotsTXT        = true
     sidebar        = { subtitle = "技术笔记", avatar = "img/avatar.png", emoji = "✏️" }
 
 [params.article]
+    # 全站开启 KaTeX 公式支持（Stack 用 CDN 加载 KaTeX 0.16.9）
+    math = true
+
     [params.article.license]
         enabled = true
         default = ""
