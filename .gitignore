@@ -18,3 +18,7 @@
 
 # Hugo 自动生成的编辑器配置（Stack 4 下已失效）
 /assets/jsconfig.json
+
+# Python 缓存
+__pycache__/
+*.pyc
