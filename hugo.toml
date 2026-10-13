@@ -1,0 +1,65 @@
+# Hugo 主配置
+# 内容放在 content/post/，由 Notion 同步脚本写入
+
+baseURL               = "https://blog.darven.top/"
+title                  = "darcyjoven"
+theme                  = "Stack"
+
+# 中文站点：影响 Summary / WordCount，也影响 Pagefind 的分词策略
+hasCJKLanguage         = true
+defaultContentLanguage = "zh"
+
+enableRobotsTXT        = true
+
+[pagination]
+    pagerSize = 10
+
+[permalinks]
+    post = "/p/:slug/"
+    page = "/:slug/"
+
+[params]
+    mainSections   = ["post"]
+    rssFullContent = true
+
+    # Stack 4 里这些是平铺参数，不能写成嵌套表
+    favicon        = "img/avatar.png"
+    touchIcon      = "img/avatar.png"
+    appleTouchIcon = "img/avatar.png"
+
+    sidebar        = { subtitle = "技术笔记", avatar = "img/avatar.png", emoji = "✏️" }
+
+[params.article]
+    [params.article.license]
+        enabled = true
+        default = ""
+
+[params.widgets]
+    homepage = [
+        { type = "search" },
+        { type = "archives",  params = { limit = 10 } },
+        { type = "categories", params = { limit = 10 } },
+        { type = "tag-cloud",  params = { limit = 20 } },
+    ]
+    page = [{ type = "toc" }]
+
+[params.related]
+    threshold    = 80
+    includeNewer = false
+    toLower      = false
+
+[markup]
+    [markup.goldmark.renderer]
+        # 允许 Markdown 里内嵌 HTML
+        unsafe = true
+    [markup.highlight]
+        noClasses          = false
+        codeFences         = true
+        guessSyntax        = true
+        lineNos            = true
+        lineNumbersInTable = true
+        tabWidth           = 4
+    [markup.tableOfContents]
+        startLevel = 2
+        endLevel   = 4
+        ordered    = true
