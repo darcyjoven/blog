@@ -161,9 +161,19 @@ $$
 
 ## 图片
 
-下面是本地图（同步脚本下载 Notion 图片后就是这个效果）：
+### 站内路径引用（同步脚本下载 Notion 图片后的效果）
 
-![占位图](/images/avatar.png)
+Notion 同步时把图片下载到 `static/images/`，构建后就在 `/images/` 下，用站内路径引用：
+
+![站内图片](/images/test-placeholder.png)
+
+### 资源路径引用（主题头像走的是这条路）
+
+Stack 的头像放在 `assets/img/`，构建时输出到 `/img/`：
+
+![资源图片](/img/avatar.png)
+
+> **注意两者的区别**：`assets/` 会被 Hugo 处理（可做图片优化），输出到 `/img/`；`static/` 原样拷贝，输出到 `/`。文章插图应该放 `static/`。
 
 ## 结论
 
