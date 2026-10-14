@@ -1,0 +1,16 @@
+{{- /*
+  head 扩展点：补充多尺寸 favicon。
+
+  Stack 4 默认只输出一个 <link rel="shortcut icon">（见 head.html 第 26-29 行），
+  并且 v4 的 layouts 不再实际使用 params.touchIcon / params.appleTouchIcon。
+  浏览器 tab 图标理想尺寸是 32x32，用 400x400 的原图会浪费带宽，
+  所以这里手动注入多尺寸声明，让浏览器各取所需。
+
+  文件位置是项目侧覆盖（layouts/_partials/head/custom.html），
+  Hugo 优先使用项目的 partials，主题里的同路径文件（空文件）被忽略。
+*/ -}}
+<link rel="icon" type="image/png" sizes="32x32" href="{{ "icons/favicon-32.png" | relURL }}" />
+<link rel="icon" type="image/png" sizes="16x16" href="{{ "icons/favicon-16.png" | relURL }}" />
+<link rel="icon" type="image/png" sizes="48x48" href="{{ "icons/favicon-48.png" | relURL }}" />
+<link rel="apple-touch-icon" sizes="180x180" href="{{ "icons/apple-touch-icon.png" | relURL }}" />
+<meta name="theme-color" content="#2b83c9" />

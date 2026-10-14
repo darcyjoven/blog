@@ -22,12 +22,15 @@ enableRobotsTXT        = true
     mainSections   = ["post"]
     rssFullContent = true
 
-    # Stack 4 里这些是平铺参数，不能写成嵌套表
-    favicon        = "img/avatar.png"
-    touchIcon      = "img/avatar.png"
-    appleTouchIcon = "img/avatar.png"
+    # 侧边栏头像。用 256x256 而非 400x400 原图——侧边栏实际显示约 64px，
+# 原图 123KB 每次都要传一遍，缩到 256px（34KB）肉眼无差别。
+# 400x400 原图保留在 assets/img/avatar-src.png，需要更大尺寸时用。
+    sidebar        = { subtitle = "技术笔记", avatar = "img/avatar-256.png", emoji = "✏️" }
 
-    sidebar        = { subtitle = "技术笔记", avatar = "img/avatar.png", emoji = "✏️" }
+    # favicon 交给 layouts/_partials/head/custom.html 处理。
+    # 不设的话 Stack 会输出 <link rel="shortcut icon"> 指向 400x400 原图，
+    # 浏览器 tab 图标只需要 32x32，那样太浪费带宽。
+    # 各尺寸文件在 static/icons/，构建后位于 /icons/。
 
     # 评论系统：utterances（评论存 GitHub Issues）
     [params.comments]
