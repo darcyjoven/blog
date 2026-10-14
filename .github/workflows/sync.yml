@@ -17,6 +17,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: notion-sync
@@ -25,6 +27,10 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # 输出供 deploy job 使用
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,31 +47,44 @@ jobs:
         run: |
           python3 scripts/sync.py
 
-      - name: 有变更则提交并推送
-        env:
-          # 用 PAT 而不是默认的 GITHUB_TOKEN。
-          #
-          # 原因：GITHUB_TOKEN 推送的 commit 会被 GitHub 标记，
-          # 从而**抑制所有 workflow 的 push 触发**（包括 deploy.yml）——
-          # 这是为了防止 workflow 无限循环。
-          # 结果就是：内容提交成功，但站点不部署。
-          #
-          # PAT 需要 Contents: Read and write 权限。
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+      - name: 提交变更
+        id: commit
         run: |
           if [ -z "$(git status --porcelain content/ static/)" ]; then
             echo "无内容变更，跳过提交"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add content/ static/
+
+          # commit message 不能带 [skip ci]，那个标记会抑制所有 workflow
           git commit -m "chore: 同步 Notion 内容"
 
-          # 注意：commit message 不能带 [skip ci]，
-          # 那个标记同样会抑制 deploy.yml。
-          git push "https://x-access-token:${DEPLOY_TOKEN}@github.com/darcyjoven/blog.git" HEAD:main
+          # 用默认的 GITHUB_TOKEN 推送（不配 remote URL）。
+          #
+          # 关键：GITHUB_TOKEN 推送的 commit 会被 GitHub 标记，
+          # 从而抑制 deploy.yml 的 push 触发（GitHub 为防 workflow 循环的设计）。
+          # 所以 deploy.yml 不会自动运行，需要下面显式调用。
+          git push origin HEAD:main
 
-# push 用的是 PAT 而非 GITHUB_TOKEN，所以会正常触发 deploy.yml
-# （Hugo 构建 + Pagefind 索引 + 发布 Pages）。
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # 复用 deploy.yml 构建并发布。
+  #
+  # 为什么显式调用而不是靠 push 自动触发：
+  # 上面用 GITHUB_TOKEN 推送已经抑制了 push 触发，这里调用
+  # 是唯一且必然的部署入口，避免部署两次。
+  #
+  # 好处：sync 自带部署能力，不依赖外部触发是否正常，
+  # 也不需要额外的 PAT Secret。
+  deploy:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      sha: ${{ needs.sync.outputs.sha }}
