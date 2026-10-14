@@ -51,7 +51,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add content/ static/
-          git commit -m "chore: 同步 Notion 内容 [skip ci]"
+          # 注意：不要用 [skip ci]。
+          # GitHub 的 skip 标记会同时抑制 sync.yml 和 deploy.yml，
+          # 结果是内容提交了但站点不部署。
+          git commit -m "chore: 同步 Notion 内容"
           git push
 
 # commit push 会自动触发 deploy.yml（Hugo 构建 + Pagefind + 发布），
