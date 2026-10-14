@@ -43,7 +43,12 @@ jobs:
       - name: 提交变更
         id: commit
         run: |
-          if [ -z "$(git status --porcelain bdl/src/ bdl/images/ 2>/dev/null)" ]; then
+          # 用 bdl/ 而不是 bdl/src/ bdl/images/：
+          # git add 对不存在的 pathspec 直接报 fatal（exit 128），
+          # 而 git status 只是静默跳过——两者行为不一致。
+          # 文章没有图片时 bdl/images/ 可能不存在，会踩这个坑。
+          # bdl/book/ 已被 .gitignore 排除，不会误提交产物。
+          if [ -z "$(git status --porcelain bdl/ 2>/dev/null)" ]; then
             echo "无内容变更"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -52,7 +57,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bdl/src/ bdl/images/
+          git add bdl/
           git commit -m "chore: 同步 BDL 指南"
 
           # GITHUB_TOKEN 推送会抑制 deploy.yml 的 push 触发，

@@ -190,6 +190,10 @@ def has_content(blocks: list) -> bool:
 def collect_images(blocks: list, page_id: str) -> dict:
     """递归找出图片块，返回 {block_id: 相对路径}，并下载到 images/。"""
     result = {}
+    # 始终确保目录存在——否则 workflow 里 git add bdl/images/ 会因
+    # pathspec 不存在而直接失败（git add 对不存在的路径报 fatal，
+    # 而 git status 只是静默跳过，两者行为不一致）
+    IMAGES.mkdir(parents=True, exist_ok=True)
 
     def walk(items):
         for b in items:
@@ -204,7 +208,6 @@ def collect_images(blocks: list, page_id: str) -> dict:
                     fname = image_filename(page_id, len(result), url)
                     path = IMAGES / fname
                     if not path.exists():
-                        IMAGES.mkdir(parents=True, exist_ok=True)
                         data = notion.download(url)
                         if data:
                             path.write_bytes(data)
