@@ -29,6 +29,20 @@ enableRobotsTXT        = true
 
     sidebar        = { subtitle = "技术笔记", avatar = "img/avatar.png", emoji = "✏️" }
 
+    # 评论系统：utterances（评论存 GitHub Issues）
+    [params.comments]
+        enabled = true
+        provider = "utterances"
+
+        [params.comments.utterances]
+            # 填 owner/repo，不带 https://
+            repo = "darcyjoven/blog"
+            # 用页面路径匹配 Issue，不含域名。
+            # 好处：将来换域名或改 URL，评论仍能对应到同一篇文章
+            issueTerm = "pathname"
+            # 评论 Issue 加这个标签，方便在 Issues 列表里筛选
+            label = "comment"
+
 [params.article]
     # 全站开启 KaTeX 公式支持（Stack 用 CDN 加载 KaTeX 0.16.9）
     math = true
