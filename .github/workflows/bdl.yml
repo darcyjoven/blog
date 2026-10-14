@@ -1,0 +1,77 @@
+name: Sync BDL Guide
+
+on:
+  workflow_dispatch:        # 只手动触发
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# 与 blog 同步共用 concurrency group，避免同时跑
+concurrency:
+  group: notion-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 从 Notion 同步 BDL 指南
+        env:
+          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+          NOTION_ROOT_PAGE: ${{ vars.NOTION_ROOT_PAGE_BDL }}
+        run: |
+          if [ -z "$NOTION_ROOT_PAGE" ]; then
+            echo "错误：未配置 repository variable NOTION_ROOT_PAGE_BDL"
+            exit 1
+          fi
+          python3 scripts/notion_to_mdbook.py
+
+      - name: 提交变更
+        id: commit
+        run: |
+          if [ -z "$(git status --porcelain bdl/src/ bdl/images/ 2>/dev/null)" ]; then
+            echo "无内容变更"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bdl/src/ bdl/images/
+          git commit -m "chore: 同步 BDL 指南"
+
+          # GITHUB_TOKEN 推送会抑制 deploy.yml 的 push 触发，
+          # 所以下面必须显式调用 deploy.yml。
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # 复用 deploy.yml 构建并发布。
+  #
+  # sha 必须传：被调用时 github.sha 是本次 workflow 运行的 SHA，
+  # 不是 sync 刚提交的那个 commit，不传会构建到旧内容。
+  #
+  # mdBook 的构建放在 deploy.yml 里（检测到 bdl/src/ 就构建），
+  # 因为 deploy job 是全新环境，这里构建的产物不会自动带过去。
+  # mdbook build 只要几秒，重建比传递产物简单可靠。
+  deploy:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      sha: ${{ needs.sync.outputs.sha }}

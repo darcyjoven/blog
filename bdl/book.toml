@@ -1,0 +1,23 @@
+[book]
+title = "TIPTOP/BDL 开发指南"
+language = "zh"
+description = "TIPTOP/BDL 开发环境、编译工具链与语言互调指南"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+smart-punctuation = true
+no-section-label = false
+copy-fonts = true
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1

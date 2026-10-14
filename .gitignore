@@ -22,3 +22,7 @@
 # Python 缓存
 __pycache__/
 *.pyc
+
+# mdBook 构建产物（由Actions 生成）
+/bdl/book/
+/static/bdl/

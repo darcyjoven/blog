@@ -42,6 +42,44 @@ jobs:
           hugo-version: '0.167.0'
           extended: true
 
+      # mdBook 教程（可选）。
+      # 检测到 bdl/src/ 存在才构建，所以 blog-only 的部署不受影响。
+      # 以后加 Rust / CGO 等教程，只需再建一个 <name>/ 目录和 book.toml，
+      # 这里改成循环即可，不需要动 deploy 逻辑。
+      - name: 构建 mdBook 教程（如果有）
+        run: |
+          found=0
+          for dir in bdl rust cgo */; do
+            if [ -f "$dir/book.toml" ] && [ -d "$dir/src" ]; then
+              name=$(basename "$dir")
+              echo ">>> 构建 mdBook: $name"
+              found=1
+            fi
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "未发现 mdBook 项目，跳过"
+            exit 0
+          fi
+
+          # mdBook 是 Rust 单二进制，直接下载
+          MDBOOK_VER=0.4.52
+          curl -sSL "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VER}/mdbook-v${MDBOOK_VER}-x86_64-unknown-linux-gnu.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin/
+
+          for dir in bdl rust cgo */; do
+            if [ -f "$dir/book.toml" ] && [ -d "$dir/src" ]; then
+              name=$(basename "$dir")
+              echo ">>> mdbook build $name"
+              mdbook build "$dir"
+              # 产物移到 static/<name>/，hugo build 会拷进 public/<name>/
+              rm -rf "static/$name"
+              mkdir -p "static/$name"
+              cp -r "$dir/book/." "static/$name/"
+              echo ">>> $name 产物已放入 static/$name/"
+            fi
+          done
+
       - name: 配置 Git 身份（Stack 主题需要）
         run: |
           git config user.name "github-actions[bot]"
