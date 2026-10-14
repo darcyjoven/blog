@@ -265,6 +265,10 @@ def build_placeholder(child: dict, depth: int) -> str:
 
     mdBook 要求 SUMMARY.md 每一项都是链接，所以这类页面也要生成文件。
     内容写「本章导读 + 子章节列表」，读起来像正常的导航页。
+
+    注意：这里的子章节链接文字**不带编号**，和 SUMMARY.md 保持一致——
+    mdBook 会给导航自动加编号，重复显示会很难看。
+    但链接目标文件名带编号（保证 URL 稳定）。
     """
     lines = ["*本章内容待补充。*", ""]
 
@@ -274,7 +278,7 @@ def build_placeholder(child: dict, depth: int) -> str:
         lines.append("")
         for k in kids:
             fn = slugify(f"{k['num']} {k['title']}")
-            lines.append(f"- [{k['num']} {k['title']}]({fn}.md)")
+            lines.append(f"- [{k['title']}]({fn}.md)")
     else:
         lines.append("（暂无子章节）")
 
@@ -296,7 +300,15 @@ def generate(notion: Notion, root_id: str) -> int:
     for f in SRC.glob("*.md"):
         f.unlink()
 
-    summary = [f"# Summary", "", f"- [{root_title}]({slugify(root_title)}.md)"]
+    # 根页面不放进列表——mdBook 会给列表里的每一项自动编号，
+    # 根页面若在列表里就会占掉1.，导致子章节变成 1.1。
+    # 写成 draft（列表外的独立链接）就不会被编号。
+    summary = [
+        "# Summary",
+        "",
+        f"[{root_title}]({slugify(root_title)}.md)",
+        "",
+    ]
     written = skipped = 0
 
     def walk(node, depth):
@@ -327,7 +339,7 @@ def generate(notion: Notion, root_id: str) -> int:
             written += 1
             print(f"  写 {filename}  ({kind}, {len(body)} 字)")
 
-            summary.append(f"{indent}- [{heading}]({filename})")
+            summary.append(f"{indent}- [{child['title']}]({filename})")
             walk(child, depth + 1)
 
     walk(root, 1)
